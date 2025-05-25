@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduTools - Visualizza Osservazioni</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stockwise.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="logo-text">EduTools</div>
+                </div>
+                <div class="sidebar-collapse">
+                    <i class="fas fa-chevron-left"></i>
+                </div>
+            </div>
+            <div class="sidebar-content">
+                <div class="menu-section">
+                    <div class="menu-section-title">MAIN MENU</div>
+                    <ul class="menu-items">
+                        <li class="menu-item">
+                            <a href="{{ url_for('home') }}">
+                                <div class="menu-item-icon">
+                                    <i class="fas fa-th-large"></i>
+                                </div>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="{{ url_for('chatbot') }}">
+                                <div class="menu-item-icon">
+                                    <i class="fas fa-comment-dots"></i>
+                                </div>
+                                Assistente Docente
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="{{ url_for('valutazione') }}">
+                                <div class="menu-item-icon">
+                                    <i class="fas fa-clipboard-check"></i>
+                                </div>
+                                Valutazione RIZA
+                            </a>
+                        </li>
+                        <li class="menu-item active">
+                            <a href="{{ url_for('view_observations') }}">
+                                <div class="menu-item-icon">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                Visualizza Osservazioni
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                {% if session.get('user_role') == 'admin' %}
+                <div class="menu-section">
+                    <div class="menu-section-title">AMMINISTRAZIONE</div>
+                    <ul class="menu-items">
+                        <li class="menu-item">
+                            <a href="{{ url_for('admin_dashboard') }}">
+                                <div class="menu-item-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                Dashboard Admin
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="{{ url_for('admin_users') }}">
+                                <div class="menu-item-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                Gestione Utenti
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="{{ url_for('admin_conversations') }}">
+                                <div class="menu-item-icon">
+                                    <i class="fas fa-comments"></i>
+                                </div>
+                                Monitoraggio Conversazioni
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <div class="menu-section">
+                    <div class="menu-section-title">SUPPORTO</div>
+                    <ul class="menu-items">
+                        <li class="menu-item">
+                            <a href="#">
+                                <div class="menu-item-icon">
+                                    <i class="fas fa-question-circle"></i>
+                                </div>
+                                Guida
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="#">
+                                <div class="menu-item-icon">
+                                    <i class="fas fa-headset"></i>
+                                </div>
+                                Supporto
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <div class="mobile-menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <div class="header-search">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" placeholder="Cerca osservazioni, allievi o classi...">
+                    <div class="search-shortcut">/</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="header-icon">
+                    <i class="far fa-star"></i>
+                </div>
+                <div class="header-icon">
+                    <i class="far fa-bell"></i>
+                </div>
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        <img src="https://ui-avatars.com/api/?name={{ session.get('user_name', 'User') }}&background=0052FF&color=fff" alt="User Avatar">
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">{{ session.get('user_name', 'User') }}</div>
+                        <div class="user-email">{{ session.get('user_email', 'user@example.com') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="dashboard-grid">
+                <div class="grid-col-12">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h2 class="card-title">Ricerca Osservazioni</h2>
+                        </div>
+                        <div class="card-body">
+                            <form id="searchForm" action="{{ url_for('view_observations') }}" method="get">
+                                <div class="form-row">
+                                    <div class="form-col">
+                                        <div class="form-group">
+                                            <label class="form-label" for="allievo">Allievo</label>
+                                            <input type="text" class="form-control" id="allievo" name="allievo" value="{{ request.args.get('allievo', '') }}" placeholder="Nome dell'allievo">
+                                        </div>
+                                    </div>
+                                    <div class="form-col">
+                                        <div class="form-group">
+                                            <label class="form-label" for="classe">Classe</label>
+                                            <input type="text" class="form-control" id="classe" name="classe" value="{{ request.args.get('classe', '') }}" placeholder="Es. 3A">
+                                        </div>
+                                    </div>
+                                    <div class="form-col">
+                                        <div class="form-group">
+                                            <label class="form-label" for="disciplina">Disciplina</label>
+                                            <select class="form-control" id="disciplina" name="disciplina">
+                                                <option value="">Tutte le discipline</option>
+                                                {% for d in discipline %}
+                                                <option value="{{ d }}" {% if request.args.get('disciplina') == d %}selected{% endif %}>{{ d }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-col">
+                                        <div class="form-group">
+                                            <label class="form-label" for="dimensione">Dimensione RIZA</label>
+                                            <select class="form-control" id="dimensione" name="dimensione">
+                                                <option value="">Tutte le dimensioni</option>
+                                                {% for d in dimensioni %}
+                                                <option value="{{ d }}" {% if request.args.get('dimensione') == d %}selected{% endif %}>{{ d }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-4">
+                                    <div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search btn-icon"></i> Cerca
+                                        </button>
+                                        <button type="button" id="resetBtn" class="btn btn-secondary ml-2">
+                                            <i class="fas fa-redo btn-icon"></i> Reset
+                                        </button>
+                                    </div>
+                                    <div class="results-count">
+                                        {% if observations %}
+                                            Trovate {{ observations|length }} osservazioni
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid-col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Risultati</h2>
+                            <div class="card-actions">
+                                <button class="btn btn-sm btn-outline" id="exportBtn">
+                                    <i class="fas fa-download btn-icon"></i> Esporta
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Allievo</th>
+                                            <th>Classe</th>
+                                            <th>Disciplina</th>
+                                            <th>Dimensione</th>
+                                            <th>Processo</th>
+                                            <th>Livello</th>
+                                            <th>Data</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if observations %}
+                                            {% for obs in observations %}
+                                            <tr class="observation-row" data-id="{{ obs.id }}">
+                                                <td>{{ obs.allievo }}</td>
+                                                <td>{{ obs.classe }}</td>
+                                                <td>{{ obs.disciplina }}</td>
+                                                <td>{{ obs.dimensione }}</td>
+                                                <td>{{ obs.processo }}</td>
+                                                <td>
+                                                    <span class="badge {% if obs.livello == 'Avanzato' %}badge-success{% elif obs.livello == 'Intermedio' %}badge-primary{% elif obs.livello == 'Base' %}badge-warning{% else %}badge-neutral{% endif %}">
+                                                        {{ obs.livello }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ obs.data_creazione }}</td>
+                                                <td class="text-right">
+                                                    <button class="btn-icon view-observation" data-id="{{ obs.id }}">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="8" class="text-center p-4">
+                                                    {% if request.args %}
+                                                        Nessuna osservazione trovata con i criteri di ricerca specificati.
+                                                    {% else %}
+                                                        Utilizza i filtri sopra per cercare osservazioni o lascia vuoti tutti i campi per visualizzare tutte le osservazioni.
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Observation Detail Modal -->
+    <div class="modal-backdrop" id="observationModal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Dettaglio Osservazione</h2>
+                <div class="modal-close" id="closeModal">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+            <div class="modal-body" id="observationDetails">
+                <!-- Observation details will be loaded here -->
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Caricamento dettagli...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="closeModalBtn">Chiudi</button>
+                <button class="btn btn-primary" id="printObservation">
+                    <i class="fas fa-print btn-icon"></i> Stampa
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Mobile menu toggle
+            $('.mobile-menu-toggle').click(function() {
+                $('.sidebar').toggleClass('open');
+            });
+            
+            // Sidebar collapse
+            $('.sidebar-collapse').click(function() {
+                $('.app-container').toggleClass('sidebar-collapsed');
+            });
+            
+            // Close sidebar when clicking outside on mobile
+            $(document).on('click touchstart', function(e) {
+                if ($(window).width() < 768) {
+                    if (!$(e.target).closest('.sidebar').length && !$(e.target).closest('.mobile-menu-toggle').length) {
+                        $('.sidebar').removeClass('open');
+                    }
+                }
+            });
+            
+            // Reset search form
+            $('#resetBtn').click(function() {
+                $('#allievo, #classe').val('');
+                $('#disciplina, #dimensione').val('');
+                $('#searchForm').submit();
+            });
+            
+            // View observation details (both from button and row click)
+            $('.view-observation, .observation-row').click(function() {
+                const observationId = $(this).data('id');
+                
+                $('#observationDetails').html('<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i><p>Caricamento dettagli...</p></div>');
+                $('#observationModal').fadeIn(200);
+                
+                // Fetch observation details
+                $.ajax({
+                    url: '/get_observation_details/' + observationId,
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.success) {
+                            const obs = response.observation;
+                            
+                            $('#observationDetails').html(`
+                                <div class="observation-details">
+                                    <div class="detail-section">
+                                        <h4>Informazioni Generali</h4>
+                                        <div class="detail-row">
+                                            <div class="detail-label">Allievo:</div>
+                                            <div class="detail-value">${obs.allievo}</div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <div class="detail-label">Classe:</div>
+                                            <div class="detail-value">${obs.classe}</div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <div class="detail-label">Disciplina:</div>
+                                            <div class="detail-value">${obs.disciplina}</div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <div class="detail-label">Data:</div>
+                                            <div class="detail-value">${obs.data_creazione}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="detail-section">
+                                        <h4>Situazione Osservata</h4>
+                                        <p>${obs.situazione}</p>
+                                    </div>
+                                    
+                                    <div class="detail-section">
+                                        <h4>Osservazione</h4>
+                                        <p>${obs.osservazione}</p>
+                                    </div>
+                                    
+                                    <div class="detail-section">
+                                        <h4>Classificazione RIZA</h4>
+                                        <div class="detail-row">
+                                            <div class="detail-label">Dimensione:</div>
+                                            <div class="detail-value">${obs.dimensione}</div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <div class="detail-label">Processo:</div>
+                                            <div class="detail-value">${obs.processo}</div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <div class="detail-label">Livello:</div>
+                                            <div class="detail-value">${obs.livello}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="detail-section">
+                                        <h4>Descrittore RIZA</h4>
+                                        <p>${obs.testo_descrittore || 'Nessun descrittore associato'}</p>
+                                    </div>
+                                </div>
+                            `);
+                        } else {
+                            $('#observationDetails').html(`
+                                <div class="alert alert-danger">
+                                    <div class="alert-icon">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                    </div>
+                                    <div class="alert-content">
+                                        <div class="alert-title">Errore</div>
+                                        <div class="alert-message">${response.error || 'Si è verificato un errore durante il caricamento dei dettagli.'}</div>
+                                    </div>
+                                </div>
+                            `);
+                        }
+                    },
+                    error: function() {
+                        $('#observationDetails').html(`
+                            <div class="alert alert-danger">
+                                <div class="alert-icon">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <div class="alert-title">Errore</div>
+                                    <div class="alert-message">Si è verificato un errore durante il caricamento dei dettagli. Riprova più tardi.</div>
+                                </div>
+                            </div>
+                        `);
+                    }
+                });
+            });
+            
+            // Close modal
+            $('#closeModal, #closeModalBtn').click(function() {
+                $('#observationModal').fadeOut(200);
+            });
+            
+            // Close modal when clicking outside
+            $('#observationModal').click(function(e) {
+                if ($(e.target).is('#observationModal')) {
+                    $('#observationModal').fadeOut(200);
+                }
+            });
+            
+            // Print observation
+            $('#printObservation').click(function() {
+                const content = $('#observationDetails').html();
+                const printWindow = window.open('', '_blank');
+                
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Dettaglio Osservazione</title>
+                        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+                        <style>
+                            body {
+                                font-family: 'Inter', sans-serif;
+                                padding: 20px;
+                                color: #333;
+                            }
+                            .observation-details {
+                                max-width: 800px;
+                                margin: 0 auto;
+                            }
+                            .detail-section {
+                                margin-bottom: 20px;
+                                padding-bottom: 15px;
+                                border-bottom: 1px solid #eee;
+                            }
+                            .detail-section:last-child {
+                                border-bottom: none;
+                            }
+                            h4 {
+                                margin-top: 0;
+                                margin-bottom: 10px;
+                                font-size: 16px;
+                                color: #0052FF;
+                            }
+                            .detail-row {
+                                display: flex;
+                                margin-bottom: 8px;
+                            }
+                            .detail-label {
+                                font-weight: 600;
+                                width: 120px;
+                                flex-shrink: 0;
+                            }
+                            p {
+                                margin-top: 0;
+                                line-height: 1.5;
+                            }
+                            @media print {
+                                body {
+                                    font-size: 12pt;
+                                }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="observation-details">
+                            <h2 style="text-align: center; margin-bottom: 30px; color: #0052FF;">Dettaglio Osservazione</h2>
+                            ${content}
+                        </div>
+                    </body>
+                    </html>
+                `);
+                
+                printWindow.document.close();
+                printWindow.focus();
+                
+                // Print after a short delay to ensure styles are loaded
+                setTimeout(function() {
+                    printWindow.print();
+                }, 500);
+            });
+            
+            // Export to CSV
+            $('#exportBtn').click(function() {
+                // In a real implementation, this would call an API endpoint
+                alert('Funzionalità di esportazione in fase di implementazione');
+            });
+            
+            // Submit form when pressing Enter in search fields
+            $('#allievo, #classe').keypress(function(e) {
+                if (e.which === 13) {
+                    $('#searchForm').submit();
+                }
+            });
+            
+            // Auto-submit when changing select fields
+            $('#disciplina, #dimensione').change(function() {
+                $('#searchForm').submit();
+            });
+        });
+    </script>
+</body>
+</html>
